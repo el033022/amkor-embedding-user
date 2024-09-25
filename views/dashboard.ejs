@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashbboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/powerbi-client@2.9.0/dist/powerbi.js"></script>
+
+</head>
+
+<body>
+    <h1>Dashboard</h1>
+    <p>Welcome <%= username %></p>
+    <a href="/logout">Sign Out</a>
+    <div id="embedContainer" style="height: 600px; width: 800px;"></div>
+
+    <script>
+
+        // Power BI Embed configuration
+        async function main() {
+
+            let models = window['powerbi-client'].models;
+
+            const response = await fetch('/embed-token');
+            const { data } = await response.json();
+            // Power BI report details
+            console.log(data)
+            const basicFilter = {
+                $schema: "http://powerbi.com/product/schema#basic",
+                target: {
+                    table: "Product",
+                    column: "Category"
+                },
+                operator: "eq",
+                values: ["Bikes"],
+                filterType: models.FilterType.BasicFilter
+            };
+
+            var embedConfig = {
+                type: 'report', // For dashboards, this will be 'dashboard'
+                id: data.reportId, // Report ID obtained from Power BI service
+                embedUrl: data.embedTokenURL, //https://app.powerbi.com/reportEmbed?reportId=${REPORT_ID}&groupId=${WORKSPACE_ID}&embedToken=${embedToken.token}
+                accessToken: data.embedToken.token,
+                tokenType: models.TokenType.Embed,
+                permissions: models.Permissions.All,
+                filters: [basicFilter],
+                settings: {
+                    filterPaneEnabled: false, // Show or hide the filter pane
+                    navContentPaneEnabled: true // Show or hide the navigation pane
+                    // visualRenderedEvents: true
+                }
+            };
+
+            // Embed the report and display it within the div container
+            var reportContainer = document.getElementById('embedContainer');
+            var report = powerbi.embed(reportContainer, embedConfig);
+
+            // Optionally handle events, for example, when the report is loaded
+            report.on("loaded", function () {
+                console.log("Report loaded successfully");
+            });
+
+            // Optionally, handle errors
+            report.on("error", function (event) {
+                console.error("Embedding error: ", event.detail);
+            });
+
+        }
+ 
+        main();
+
+    </script>
+</body>
+
+</html>
