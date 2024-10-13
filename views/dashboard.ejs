@@ -6,16 +6,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashbboard</title>
     <script src="https://cdn.jsdelivr.net/npm/powerbi-client@2.9.0/dist/powerbi.js"></script>
+    <link rel="stylesheet" href="/css/style.css">
 
 </head>
 
 <body>
-    <h1>Dashboard</h1>
-    <p>Welcome <%= username %></p>
-    <a href="/logout">Sign Out</a>
-    <div id="embedContainer" style="height: 600px; width: 800px;"></div>
+    <main>
+        <h1>Dashboard</h1>
+        <h2>Embed for your organization</h2>
+        <p>
+            In this scenario, users of your application sign in using their Power BI accounts.
+            This gives you the access token for accessing their data and embedding their reports, dashboards, and tiles.
+        </p>
+        <p>In the embedConfiguration, set tokenType to TokenType.Aad.</p>
+
+        <a href="/logout">Sign Out</a>
+        <br>
+        <!-- <iframe allow="allow-same-origin" title="AdventureWorks Sales" width="1140" height="541.25" src="https://app.powerbi.com/reportEmbed?reportId=1c0eaa4e-059d-434c-a1de-c1a32bbd66a0&autoAuth=true&ctid=b9d2e4d7-3331-44aa-b735-189229b4c840" frameborder="0" allowFullScreen="true"></iframe> -->
+        <a href="https://app.powerbi.com/reportEmbed?reportId=1c0eaa4e-059d-434c-a1de-c1a32bbd66a0&autoAuth=true&ctid=b9d2e4d7-3331-44aa-b735-189229b4c840" target="_blank">Open reprt in new tab</a>
+        <div id="embedContainer" style="height: 600px; width: 800px;"></div>
+        <button id="pipeline-trigger">PIPELINE TRIGGER</button>
+        <br>
+        <a href="/send-email">Send Email</a>
+    </main>
 
     <script>
+        const pipelineTrigger = document.getElementById('pipeline-trigger');
+
+        pipelineTrigger.addEventListener('click', async () => {
+            const response = await fetch('/trigger-pipeline');
+            const data = await response.json();
+            alert('Pipeline triggered');
+        });
+
 
         // Power BI Embed configuration
         async function main() {
@@ -24,8 +47,7 @@
 
             const response = await fetch('/embed-token');
             const { data } = await response.json();
-            // Power BI report details
-            console.log(data)
+
             const basicFilter = {
                 $schema: "http://powerbi.com/product/schema#basic",
                 target: {
@@ -37,18 +59,22 @@
                 filterType: models.FilterType.BasicFilter
             };
 
+            console.log('t',data.accessToken);
+
+            // return;
+
             var embedConfig = {
                 type: 'report', // For dashboards, this will be 'dashboard'
                 id: data.reportId, // Report ID obtained from Power BI service
-                embedUrl: data.embedTokenURL, //https://app.powerbi.com/reportEmbed?reportId=${REPORT_ID}&groupId=${WORKSPACE_ID}&embedToken=${embedToken.token}
-                accessToken: data.embedToken.token,
-                tokenType: models.TokenType.Embed,
-                permissions: models.Permissions.All,
-                filters: [basicFilter],
+                // embedUrl: data.embedTokenURL, //https://app.powerbi.com/reportEmbed?reportId=${REPORT_ID}&groupId=${WORKSPACE_ID}&embedToken=${embedToken.token}
+                embedUrl: 'https://app.powerbi.com/reportEmbed',
+                tokenType: models.TokenType.Aad, // Use Aad when using aad token
+                accessToken: data.accessToken, // eyJ0eXAiO...
+                // tokenType: models.TokenType.Embed,
+                // filters: [basicFilter]
                 settings: {
-                    filterPaneEnabled: false, // Show or hide the filter pane
-                    navContentPaneEnabled: true // Show or hide the navigation pane
-                    // visualRenderedEvents: true
+                    filterPaneEnabled: true,
+                    navContentPaneEnabled: true
                 }
             };
 
@@ -67,7 +93,7 @@
             });
 
         }
- 
+
         main();
 
     </script>
